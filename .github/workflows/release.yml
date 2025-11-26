@@ -1,0 +1,55 @@
+# 这个工作流程必须通过 GitHub Actions 界面手动触发。
+# 它会构建 'freepbx-ldap'，并使用您输入的版本号创建 Release。
+
+name: Manual Trigger Release (freepbx-ldap)
+
+on:
+  # 使用 workflow_dispatch 允许从 GitHub Actions 界面手动运行
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g., v1.0.0)'
+        required: true
+        type: string
+
+# 权限设置：必须有 contents: write 权限才能创建 Release 和上传文件
+permissions:
+  contents: write
+  
+jobs:
+  build_and_release:
+    # 按照您的要求，在 debian-bookworm 运行器上执行
+    runs-on: debian-bookworm
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' 
+          
+      # 编译步骤：构建出名为 'freepbx-ldap' 的二进制文件
+      - name: Build freepbx-ldap Binary
+        run: |
+          BINARY_NAME="freepbx-ldap"
+          # 使用 go build -o 编译，将可执行文件命名为 freepbx-ldap
+          go build -o $BINARY_NAME .
+          echo "::set-output name=binary_name::$BINARY_NAME"
+          ls -lh $BINARY_NAME
+          
+      # 第四步：创建 GitHub Release 并上传编译好的二进制文件
+      - name: Create Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          # files: 上传编译好的二进制文件
+          files: freepbx-ldap 
+          # tag_name: 使用手动输入的值作为 Release 的标签
+          tag_name: ${{ github.event.inputs.tag_name }}
+          # name: Release 的标题
+          name: Release ${{ github.event.inputs.tag_name }}
+          # 自动根据 Git 历史生成 Release Note
+          generate_release_notes: true
