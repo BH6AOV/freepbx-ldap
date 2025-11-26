@@ -19,7 +19,7 @@ permissions:
 jobs:
   build_and_release:
     # 按照您的要求，在 debian-bookworm 运行器上执行
-    runs-on: debian-bookworm
+    runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
